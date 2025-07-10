@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         SONARQUBE_ENV = 'sonarqube' // Your Jenkins SonarQube server name
-        DOCKER_CREDENTIALS_ID = 'dockerhub-id' // Jenkins credentials for Docker Hub
         BACKEND_IMAGE = 'salhianis20/wanderlust-backend-beta'
         FRONTEND_IMAGE = 'salhianis20/wanderlust-frontend-beta'
     }
@@ -15,27 +14,28 @@ pipeline {
             }
         }
 
-        
+        // Uncomment these if you want to enable SonarQube scans
+        /*
+        stage('SonarQube - wanderlust-backend-beta') {
+            steps {
+                dir('backend') {
+                    withSonarQubeEnv("${SONARQUBE_ENV}") {
+                        sh 'sonar-scanner -Dsonar.projectKey=wanderlust-backend-beta'
+                    }
+                }
+            }
+        }
 
-        // stage('SonarQube - wanderlust-backend-beta') {
-        //     steps {
-        //         dir('backend') {
-        //             withSonarQubeEnv("${SONARQUBE_ENV}") {
-        //                 sh 'sonar-scanner -Dsonar.projectKey=wanderlust-backend-beta'
-        //             }
-        //         }
-        //     }
-        // }
-
-        // stage('SonarQube - wanderlust-frontend-beta') {
-        //     steps {
-        //         dir('frontend') {
-        //             withSonarQubeEnv("${SONARQUBE_ENV}") {
-        //                 sh 'sonar-scanner -Dsonar.projectKey=wanderlust-frontend-beta'
-        //             }
-        //         }
-        //     }
-        // }
+        stage('SonarQube - wanderlust-frontend-beta') {
+            steps {
+                dir('frontend') {
+                    withSonarQubeEnv("${SONARQUBE_ENV}") {
+                        sh 'sonar-scanner -Dsonar.projectKey=wanderlust-frontend-beta'
+                    }
+                }
+            }
+        }
+        */
 
         stage('Build Docker Images') {
             steps {
@@ -48,22 +48,30 @@ pipeline {
 
         stage('Push Docker Images') {
             steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
-                        backendImage.push()
-                        backendImage.push("latest")
-
-                        frontendImage.push()
-                        frontendImage.push("latest")
+                withVault([
+                    vaultSecrets: [[
+                        path: 'kv/dockerhub-creds',
+                        secretValues: [
+                            [envVar: 'DOCKER_USERNAME', vaultKey: 'username'],
+                            [envVar: 'DOCKER_PASSWORD', vaultKey: 'password']
+                        ]
+                    ]]
+                ]) {
+                    script {
+                        sh """
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                            docker push "${BACKEND_IMAGE}:${env.BUILD_NUMBER}"
+                            docker push "${BACKEND_IMAGE}:latest"
+                            docker push "${FRONTEND_IMAGE}:${env.BUILD_NUMBER}"
+                            docker push "${FRONTEND_IMAGE}:latest"
+                            docker logout
+                        """
                     }
                 }
             }
         }
     }
-
 }
-
-
 
 
 
