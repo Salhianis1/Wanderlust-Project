@@ -14,8 +14,7 @@ pipeline {
             }
         }
 
-        // Uncomment these if you want to enable SonarQube scans
-        /*
+
         stage('SonarQube - wanderlust-backend-beta') {
             steps {
                 dir('backend') {
@@ -35,7 +34,7 @@ pipeline {
                 }
             }
         }
-        */
+    
 
         stage('Build Docker Images') {
             steps {
