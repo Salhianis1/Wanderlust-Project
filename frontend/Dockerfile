@@ -9,7 +9,7 @@ COPY package*.json ./
 
 # Install dependencies
 RUN npm config set fetch-timeout 600000 && \
-    npm i
+    npm install
 
 # Copy the rest of the application code
 COPY . .
