@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_ENV = 'sonarqube' // Your Jenkins SonarQube server name
+        SONARQUBE_ENV = 'sonarqube'
         BACKEND_IMAGE = 'salhianis20/wanderlust-backend-beta'
         FRONTEND_IMAGE = 'salhianis20/wanderlust-frontend-beta'
     }
@@ -14,47 +14,57 @@ pipeline {
             }
         }
 
-
-        stage('SonarQube - wanderlust-backend-beta') {
-            steps {
-                dir('backend') {
-                    withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh 'sonar-scanner -Dsonar.projectKey=wanderlust-backend-beta'
+        stage('SonarQube Analysis') {
+            parallel {
+                stage('Backend Analysis') {
+                    steps {
+                        dir('backend') {
+                            withSonarQubeEnv("${SONARQUBE_ENV}") {
+                                sh 'sonar-scanner -Dsonar.projectKey=wanderlust-backend-beta'
+                            }
+                        }
+                    }
+                }
+                stage('Frontend Analysis') {
+                    steps {
+                        dir('frontend') {
+                            withSonarQubeEnv("${SONARQUBE_ENV}") {
+                                sh 'sonar-scanner -Dsonar.projectKey=wanderlust-frontend-beta'
+                            }
+                        }
                     }
                 }
             }
         }
-
-        stage('SonarQube - wanderlust-frontend-beta') {
-            steps {
-                dir('frontend') {
-                    withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh 'sonar-scanner -Dsonar.projectKey=wanderlust-frontend-beta'
-                    }
-                }
-            }
-        }
-
-
-        stage("OWASP: Dependency check") {
-            steps {
-                script {
-                    owasp_dependency() // Assuming this is a shared library function or defined in Jenkins
-                }
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: '**/dependency-check-report.xml', followSymlinks: false, onlyIfSuccessful: true
-                }
-            }
-        }
-    
 
         stage('Build Docker Images') {
             steps {
                 script {
                     backendImage = docker.build("${BACKEND_IMAGE}:latest", "backend")
                     frontendImage = docker.build("${FRONTEND_IMAGE}:latest", "frontend")
+                }
+            }
+        }
+
+        stage('Trivy Scan & Report') {
+            steps {
+                script {
+                    sh '''
+                        mkdir -p trivy-reports
+
+                        trivy image --format json --output trivy-reports/backend.json ${BACKEND_IMAGE}:latest
+                        trivy image --format json --output trivy-reports/frontend.json ${FRONTEND_IMAGE}:latest
+
+                        trivy convert report \
+                            --input trivy-reports/backend.json \
+                            --format html \
+                            --output trivy-reports/backend-report.html
+
+                        trivy convert report \
+                            --input trivy-reports/frontend.json \
+                            --format html \
+                            --output trivy-reports/frontend-report.html
+                    '''
                 }
             }
         }
@@ -71,20 +81,25 @@ pipeline {
                     ]]
                 ]) {
                     script {
-                        sh '''
-                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-
+                        sh """
+                            echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
                             docker push ${BACKEND_IMAGE}:latest
                             docker push ${FRONTEND_IMAGE}:latest
-
                             docker logout
-                        '''
+                        """
                     }
                 }
             }
         }
+
+        stage('Archive Trivy Reports') {
+            steps {
+                archiveArtifacts artifacts: 'trivy-reports/*.html', fingerprint: true
+            }
+        }
     }
 }
+
 
 
 
