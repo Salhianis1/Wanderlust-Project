@@ -46,21 +46,27 @@ pipeline {
             }
         }
 
+
         stage('Trivy Scan & Report') {
-    steps {
-        script {
-            sh '''
-                mkdir -p trivy-reports
-
-                trivy image --format json --output trivy-reports/backend.json ${BACKEND_IMAGE}:latest
-                trivy image --format json --output trivy-reports/frontend.json ${FRONTEND_IMAGE}:latest
-
-                trivy convert --format html --output trivy-reports/backend-report.html trivy-reports/backend.json
-                trivy convert --format html --output trivy-reports/frontend-report.html trivy-reports/frontend.json
-            '''
+            steps {
+                script {
+                    sh '''
+                        mkdir -p trivy-reports
+        
+                        # Download HTML template (once)
+                        curl -sSL -o trivy-html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+        
+                        # Run Trivy image scans
+                        trivy image --format json --output trivy-reports/backend.json ${BACKEND_IMAGE}:latest
+                        trivy image --format json --output trivy-reports/frontend.json ${FRONTEND_IMAGE}:latest
+        
+                        # Convert JSON to HTML using the template
+                        trivy convert --format template --template @trivy-html.tpl --output trivy-reports/backend-report.html trivy-reports/backend.json
+                        trivy convert --format template --template @trivy-html.tpl --output trivy-reports/frontend-report.html trivy-reports/frontend.json
+                    '''
+                }
+            }
         }
-    }
-}
 
         stage('Push Docker Images') {
             steps {
