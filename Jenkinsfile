@@ -40,8 +40,8 @@ pipeline {
         stage('Build Docker Images') {
             steps {
                 script {
-                    backendImage = docker.build("${BACKEND_IMAGE}:${env.BUILD_NUMBER}", "backend")
-                    frontendImage = docker.build("${FRONTEND_IMAGE}:${env.BUILD_NUMBER}", "frontend")
+                    backendImage = docker.build("${BACKEND_IMAGE}:latest", "backend")
+                    frontendImage = docker.build("${FRONTEND_IMAGE}:latest", "frontend")
                 }
             }
         }
@@ -58,14 +58,14 @@ pipeline {
                     ]]
                 ]) {
                     script {
-                        sh """
+                        sh '''
                             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                            docker push "${BACKEND_IMAGE}:${env.BUILD_NUMBER}"
-                            docker push "${BACKEND_IMAGE}:latest"
-                            docker push "${FRONTEND_IMAGE}:${env.BUILD_NUMBER}"
-                            docker push "${FRONTEND_IMAGE}:latest"
+
+                            docker push ${BACKEND_IMAGE}:latest
+                            docker push ${FRONTEND_IMAGE}:latest
+
                             docker logout
-                        """
+                        '''
                     }
                 }
             }
