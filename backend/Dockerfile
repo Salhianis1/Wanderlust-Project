@@ -13,12 +13,10 @@ FROM node:21-slim
 WORKDIR /app
 COPY --from=backend-builder /app/node_modules ./node_modules
 COPY --from=backend-builder /app/package.json ./
-COPY --from=backend-builder /app/dist ./dist # Adjust based on your app's output
+COPY --from=backend-builder /app ./
 COPY .env.docker .env
 EXPOSE 8080
 CMD ["npm", "start"]
-
-
 
 
 # # Stage 1
