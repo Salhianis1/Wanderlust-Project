@@ -17,25 +17,25 @@ pipeline {
 
         
 
-        stage('SonarQube - wanderlust-backend-beta') {
-            steps {
-                dir('backend') {
-                    withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh 'sonar-scanner -Dsonar.projectKey=wanderlust-backend-beta'
-                    }
-                }
-            }
-        }
+        // stage('SonarQube - wanderlust-backend-beta') {
+        //     steps {
+        //         dir('backend') {
+        //             withSonarQubeEnv("${SONARQUBE_ENV}") {
+        //                 sh 'sonar-scanner -Dsonar.projectKey=wanderlust-backend-beta'
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('SonarQube - wanderlust-frontend-beta') {
-            steps {
-                dir('frontend') {
-                    withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh 'sonar-scanner -Dsonar.projectKey=wanderlust-frontend-beta'
-                    }
-                }
-            }
-        }
+        // stage('SonarQube - wanderlust-frontend-beta') {
+        //     steps {
+        //         dir('frontend') {
+        //             withSonarQubeEnv("${SONARQUBE_ENV}") {
+        //                 sh 'sonar-scanner -Dsonar.projectKey=wanderlust-frontend-beta'
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Build Docker Images') {
             steps {
