@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONARQUBE_ENV = 'SonarQube'  // Jenkins SonarQube server name
-        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
+        DOCKER_CREDENTIALS_ID = 'dockerhub-id'
         BACKEND_IMAGE = 'salhianis20/wanderlust-backend-beta'
         FRONTEND_IMAGE = 'salhianis20/wanderlust-frontend-beta'
     }
