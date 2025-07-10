@@ -34,6 +34,20 @@ pipeline {
                 }
             }
         }
+
+
+        stage("OWASP: Dependency check") {
+            steps {
+                script {
+                    owasp_dependency() // Assuming this is a shared library function or defined in Jenkins
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: '**/dependency-check-report.xml', followSymlinks: false, onlyIfSuccessful: true
+                }
+            }
+        }
     
 
         stage('Build Docker Images') {
