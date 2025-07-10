@@ -61,14 +61,6 @@ pipeline {
         }
     }
 
-    post {
-        success {
-            echo '✅ MERN backend and frontend built, analyzed, and pushed successfully!'
-        }
-        failure {
-            echo '❌ Pipeline failed.'
-        }
-    }
 }
 
 
