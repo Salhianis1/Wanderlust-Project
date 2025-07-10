@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_ENV = 'SonarQube' // Your Jenkins SonarQube server name
+        SONARQUBE_ENV = 'sonarqube' // Your Jenkins SonarQube server name
         DOCKER_CREDENTIALS_ID = 'dockerhub-id' // Jenkins credentials for Docker Hub
         BACKEND_IMAGE = 'salhianis20/wanderlust-backend-beta'
         FRONTEND_IMAGE = 'salhianis20/wanderlust-frontend-beta'
