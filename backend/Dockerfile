@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # packages install
-RUN npm i --force
+RUN npm install -g npm@latest && npm i --force
 
 # tests
 RUN npm run test
