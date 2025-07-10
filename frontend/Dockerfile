@@ -8,7 +8,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install --force
+RUN npm config set fetch-timeout 600000 && \
+    npm i
 
 # Copy the rest of the application code
 COPY . .
