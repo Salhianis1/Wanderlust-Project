@@ -12,7 +12,6 @@ COPY . .
 # RUN npm i
 
 RUN npm config set fetch-timeout 600000 && \
-    npm config set registry https://registry.yarnpkg.com && \
     npm i
 
 # tests
