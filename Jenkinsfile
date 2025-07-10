@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        SONARQUBE_ENV = 'SonarQube'  // Jenkins SonarQube server name
-        DOCKER_CREDENTIALS_ID = 'dockerhub-id'
+        SONARQUBE_ENV = 'SonarQube' // Your Jenkins SonarQube server name
+        DOCKER_CREDENTIALS_ID = 'dockerhub-id' // Jenkins credentials for Docker Hub
         BACKEND_IMAGE = 'salhianis20/wanderlust-backend-beta'
         FRONTEND_IMAGE = 'salhianis20/wanderlust-frontend-beta'
     }
@@ -15,11 +15,30 @@ pipeline {
             }
         }
 
+        stage('Install Dependencies') {
+            parallel {
+                stage('Backend Install') {
+                    steps {
+                        dir('backend') {
+                            sh 'npm install'
+                        }
+                    }
+                }
+                stage('Frontend Install') {
+                    steps {
+                        dir('frontend') {
+                            sh 'npm install'
+                        }
+                    }
+                }
+            }
+        }
+
         stage('SonarQube - Backend') {
             steps {
                 dir('backend') {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh 'mvn clean verify sonar:sonar -Dsonar.projectKey=backend' // Maven
+                        sh 'sonar-scanner -Dsonar.projectKey=backend'
                     }
                 }
             }
@@ -29,7 +48,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh 'sonar-scanner -Dsonar.projectKey=frontend' // Node.js or generic project
+                        sh 'sonar-scanner -Dsonar.projectKey=frontend'
                     }
                 }
             }
@@ -69,19 +88,13 @@ pipeline {
 
     post {
         success {
-            echo '✅ Backend and frontend built and pushed successfully!'
+            echo '✅ MERN backend and frontend built, analyzed, and pushed successfully!'
         }
         failure {
             echo '❌ Pipeline failed.'
         }
     }
 }
-
-
-
-
-
-
 
 
 
