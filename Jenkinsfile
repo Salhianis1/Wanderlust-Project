@@ -15,24 +15,7 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
-            parallel {
-                stage('Backend Install') {
-                    steps {
-                        dir('backend') {
-                            sh 'npm install'
-                        }
-                    }
-                }
-                stage('Frontend Install') {
-                    steps {
-                        dir('frontend') {
-                            sh 'npm install'
-                        }
-                    }
-                }
-            }
-        }
+        
 
         stage('SonarQube - Backend') {
             steps {
