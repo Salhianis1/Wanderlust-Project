@@ -8,6 +8,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -46,21 +47,20 @@ pipeline {
             }
         }
 
-
         stage('Trivy Scan & Report') {
             steps {
                 script {
                     sh '''
                         mkdir -p trivy-reports
-        
-                        # Download HTML template (once)
+
+                        # Download HTML template
                         curl -sSL -o trivy-html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
-        
-                        # Run Trivy image scans
+
+                        # Trivy image scan
                         trivy image --format json --output trivy-reports/backend.json ${BACKEND_IMAGE}:latest
                         trivy image --format json --output trivy-reports/frontend.json ${FRONTEND_IMAGE}:latest
-        
-                        # Convert JSON to HTML using the template
+
+                        # Convert JSON to HTML
                         trivy convert --format template --template @trivy-html.tpl --output trivy-reports/backend-report.html trivy-reports/backend.json
                         trivy convert --format template --template @trivy-html.tpl --output trivy-reports/frontend-report.html trivy-reports/frontend.json
                     '''
@@ -80,30 +80,33 @@ pipeline {
                     ]]
                 ]) {
                     script {
-                        sh """
-                            echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
+                        sh '''
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
                             docker push ${BACKEND_IMAGE}:latest
                             docker push ${FRONTEND_IMAGE}:latest
                             docker logout
-                        """
+                        '''
                     }
                 }
             }
         }
 
-        stage('Archive Trivy Reports') {
+        stage('Archive and Publish Trivy Reports') {
             steps {
                 archiveArtifacts artifacts: 'trivy-reports/*.html', fingerprint: true
+
+                publishHTML(target: [
+                    reportDir: 'trivy-reports',
+                    reportFiles: 'backend-report.html,frontend-report.html',
+                    reportName: 'Trivy Security Scan Reports',
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true
+                ])
             }
         }
     }
 }
-
-
-
-
-
-
 
 
 
