@@ -17,21 +17,21 @@ pipeline {
 
         
 
-        stage('SonarQube - Backend') {
+        stage('SonarQube - wanderlust-backend-beta') {
             steps {
                 dir('backend') {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh 'sonar-scanner -Dsonar.projectKey=backend'
+                        sh 'sonar-scanner -Dsonar.projectKey=wanderlust-backend-beta'
                     }
                 }
             }
         }
 
-        stage('SonarQube - Frontend') {
+        stage('SonarQube - wanderlust-frontend-beta') {
             steps {
                 dir('frontend') {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh 'sonar-scanner -Dsonar.projectKey=frontend'
+                        sh 'sonar-scanner -Dsonar.projectKey=wanderlust-frontend-beta'
                     }
                 }
             }
