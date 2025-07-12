@@ -15,37 +15,37 @@ pipeline {
             }
         }
 
-        // stage('SonarQube Analysis') {
-        //     parallel {
-        //         stage('Backend Analysis') {
-        //             steps {
-        //                 dir('backend') {
-        //                     withSonarQubeEnv("${SONARQUBE_ENV}") {
-        //                         sh 'sonar-scanner -Dsonar.projectKey=wanderlust-backend-beta'
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //         stage('Frontend Analysis') {
-        //             steps {
-        //                 dir('frontend') {
-        //                     withSonarQubeEnv("${SONARQUBE_ENV}") {
-        //                         sh 'sonar-scanner -Dsonar.projectKey=wanderlust-frontend-beta'
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+        stage('SonarQube Analysis') {
+            parallel {
+                stage('Backend Analysis') {
+                    steps {
+                        dir('backend') {
+                            withSonarQubeEnv("${SONARQUBE_ENV}") {
+                                sh 'sonar-scanner -Dsonar.projectKey=wanderlust-backend-beta'
+                            }
+                        }
+                    }
+                }
+                stage('Frontend Analysis') {
+                    steps {
+                        dir('frontend') {
+                            withSonarQubeEnv("${SONARQUBE_ENV}") {
+                                sh 'sonar-scanner -Dsonar.projectKey=wanderlust-frontend-beta'
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-        // stage('Build Docker Images') {
-        //     steps {
-        //         script {
-        //             backendImage = docker.build("${BACKEND_IMAGE}:latest", "backend")
-        //             frontendImage = docker.build("${FRONTEND_IMAGE}:latest", "frontend")
-        //         }
-        //     }
-        // }
+        stage('Build Docker Images') {
+            steps {
+                script {
+                    backendImage = docker.build("${BACKEND_IMAGE}:latest", "backend")
+                    frontendImage = docker.build("${FRONTEND_IMAGE}:latest", "frontend")
+                }
+            }
+        }
 
         stage('Trivy Scan (HTML Reports)') {
             steps {
@@ -90,28 +90,28 @@ pipeline {
             }
         }
 
-        // stage('Push Docker Images') {
-        //     steps {
-        //         withVault([
-        //             vaultSecrets: [[
-        //                 path: 'kv/dockerhub-creds',
-        //                 secretValues: [
-        //                     [envVar: 'DOCKER_USERNAME', vaultKey: 'username'],
-        //                     [envVar: 'DOCKER_PASSWORD', vaultKey: 'password']
-        //                 ]
-        //             ]]
-        //         ]) {
-        //             script {
-        //                 sh '''
-        //                     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-        //                     docker push ${BACKEND_IMAGE}:latest
-        //                     docker push ${FRONTEND_IMAGE}:latest
-        //                     docker logout
-        //                 '''
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Push Docker Images') {
+            steps {
+                withVault([
+                    vaultSecrets: [[
+                        path: 'kv/dockerhub-creds',
+                        secretValues: [
+                            [envVar: 'DOCKER_USERNAME', vaultKey: 'username'],
+                            [envVar: 'DOCKER_PASSWORD', vaultKey: 'password']
+                        ]
+                    ]]
+                ]) {
+                    script {
+                        sh '''
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                            docker push ${BACKEND_IMAGE}:latest
+                            docker push ${FRONTEND_IMAGE}:latest
+                            docker logout
+                        '''
+                    }
+                }
+            }
+        }
 
         stage('Archive and Publish Trivy HTML Reports') {
             steps {
