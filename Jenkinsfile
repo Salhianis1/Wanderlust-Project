@@ -47,28 +47,28 @@ pipeline {
             }
         }
 
-        stage('Trivy Scan & Report') {
+        stage('Trivy Scan (HTML Reports)') {
             steps {
                 script {
                     sh '''
                         mkdir -p trivy-reports
 
                         # Download HTML template
-                        curl -sSL -o trivy-html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+                        curl -sSL -o trivy-reports/trivy-html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
 
-                        # Trivy image scan
+                        # Run Trivy scans in JSON format
                         trivy image --format json --output trivy-reports/backend.json ${BACKEND_IMAGE}:latest
                         trivy image --format json --output trivy-reports/frontend.json ${FRONTEND_IMAGE}:latest
 
-                        # Convert JSON to HTML
-                        trivy convert --format template --template @trivy-html.tpl --output trivy-reports/backend-report.html trivy-reports/backend.json
-                        trivy convert --format template --template @trivy-html.tpl --output trivy-reports/frontend-report.html trivy-reports/frontend.json
+                        # Convert JSON to HTML reports
+                        trivy convert --format template --template @trivy-reports/trivy-html.tpl --output trivy-reports/backend-report.html trivy-reports/backend.json
+                        trivy convert --format template --template @trivy-reports/trivy-html.tpl --output trivy-reports/frontend-report.html trivy-reports/frontend.json
                     '''
                 }
             }
         }
 
-        stage('Trivy SARIF Report') {
+        stage('Trivy SARIF Reports') {
             steps {
                 script {
                     sh '''
@@ -77,7 +77,7 @@ pipeline {
                         # Download SARIF template
                         curl -sSL -o trivy-sarif/sarif.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/sarif.tpl
 
-                        # Trivy SARIF output
+                        # Generate SARIF files
                         trivy image --format template --template @trivy-sarif/sarif.tpl -o trivy-sarif/backend.sarif ${BACKEND_IMAGE}:latest
                         trivy image --format template --template @trivy-sarif/sarif.tpl -o trivy-sarif/frontend.sarif ${FRONTEND_IMAGE}:latest
                     '''
@@ -113,14 +113,14 @@ pipeline {
             }
         }
 
-        stage('Archive and Publish Trivy Reports') {
+        stage('Archive and Publish Trivy HTML Reports') {
             steps {
                 archiveArtifacts artifacts: 'trivy-reports/*.html', fingerprint: true
 
                 publishHTML(target: [
                     reportDir: 'trivy-reports',
                     reportFiles: 'backend-report.html,frontend-report.html',
-                    reportName: 'Trivy Security Scan Reports',
+                    reportName: 'Trivy HTML Security Reports',
                     allowMissing: false,
                     alwaysLinkToLastBuild: true,
                     keepAll: true
@@ -129,4 +129,3 @@ pipeline {
         }
     }
 }
-
