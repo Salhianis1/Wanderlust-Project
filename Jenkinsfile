@@ -68,28 +68,6 @@ pipeline {
             }
         }
 
-        stage('Trivy SARIF Reports') {
-            steps {
-                script {
-                    sh '''
-                        mkdir -p trivy-sarif
-
-                        # Download SARIF template
-                        curl -sSL -o trivy-sarif/sarif.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/sarif.tpl
-
-                        # Generate SARIF files
-                        trivy image --format template --template @trivy-sarif/sarif.tpl -o trivy-sarif/backend.sarif ${BACKEND_IMAGE}:latest
-                        trivy image --format template --template @trivy-sarif/sarif.tpl -o trivy-sarif/frontend.sarif ${FRONTEND_IMAGE}:latest
-                    '''
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'trivy-sarif/*.sarif', allowEmptyArchive: true
-                }
-            }
-        }
-
         stage('Push Docker Images') {
             steps {
                 withVault([
