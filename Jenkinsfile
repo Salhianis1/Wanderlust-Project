@@ -15,9 +15,9 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('SonarQube Scan') {
             parallel {
-                stage('Backend Analysis') {
+                stage('Backend') {
                     steps {
                         dir('backend') {
                             withSonarQubeEnv("${SONARQUBE_ENV}") {
@@ -26,7 +26,7 @@ pipeline {
                         }
                     }
                 }
-                stage('Frontend Analysis') {
+                stage('Frontend') {
                     steps {
                         dir('frontend') {
                             withSonarQubeEnv("${SONARQUBE_ENV}") {
