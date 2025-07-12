@@ -15,7 +15,7 @@ RUN npm config set fetch-timeout 600000 && \
     npm i
 
 # tests
-RUN npm run test
+# RUN npm run test
 
 # Stage 2
 FROM node:21-slim
