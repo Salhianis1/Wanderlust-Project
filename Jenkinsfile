@@ -116,7 +116,9 @@ pipeline {
         stage('Archive and Publish Trivy HTML Reports') {
             steps {
                 archiveArtifacts artifacts: 'trivy-reports/*.html', fingerprint: true
-
+        
+                // Comment out this part if plugin is not installed yet
+                /*
                 publishHTML(target: [
                     reportDir: 'trivy-reports',
                     reportFiles: 'backend-report.html,frontend-report.html',
@@ -125,7 +127,9 @@ pipeline {
                     alwaysLinkToLastBuild: true,
                     keepAll: true
                 ])
+                */
             }
         }
+
     }
 }
