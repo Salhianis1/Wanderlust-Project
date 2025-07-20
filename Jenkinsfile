@@ -47,26 +47,38 @@ pipeline {
             }
         }
 
-        stage('Trivy Scan (HTML Reports)') {
-            steps {
-                script {
-                    sh '''
-                        mkdir -p trivy-reports
+stage('Trivy Scan (HTML Reports)') {
+    steps {
+        script {
+            sh '''
+                set -e  # Exit on error
 
-                        # Download HTML template
-                        curl -sSL -o trivy-reports/trivy-html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+                mkdir -p trivy-reports
 
-                        # Run Trivy scans in JSON format
-                        trivy image --format json --output trivy-reports/backend.json ${BACKEND_IMAGE}:latest
-                        trivy image --format json --output trivy-reports/frontend.json ${FRONTEND_IMAGE}:latest
+                # Increase timeout (to avoid DB download failure)
+                export TRIVY_TIMEOUT=5m
 
-                        # Convert JSON to HTML reports
-                        trivy convert --format template --template @trivy-reports/trivy-html.tpl --output trivy-reports/backend-report.html trivy-reports/backend.json
-                        trivy convert --format template --template @trivy-reports/trivy-html.tpl --output trivy-reports/frontend-report.html trivy-reports/frontend.json
-                    '''
-                }
-            }
+                # Pre-download the vulnerability database with extended timeout
+                trivy --download-db-only
+
+                # Download HTML template
+                curl -sSL -o trivy-reports/trivy-html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+
+                # Run Trivy scans in JSON format
+                trivy image --timeout 5m --format json --output trivy-reports/backend.json ${BACKEND_IMAGE}:latest
+                trivy image --timeout 5m --format json --output trivy-reports/frontend.json ${FRONTEND_IMAGE}:latest
+
+                # Convert JSON to HTML reports
+                trivy convert --format template --template @trivy-reports/trivy-html.tpl \
+                    --output trivy-reports/backend-report.html trivy-reports/backend.json
+
+                trivy convert --format template --template @trivy-reports/trivy-html.tpl \
+                    --output trivy-reports/frontend-report.html trivy-reports/frontend.json
+            '''
         }
+    }
+}
+
 
         stage('Push Docker Images') {
             steps {
