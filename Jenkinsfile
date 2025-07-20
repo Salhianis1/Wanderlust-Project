@@ -58,8 +58,8 @@ stage('Trivy Scan (HTML Reports)') {
                 # Increase timeout (to avoid DB download failure)
                 export TRIVY_TIMEOUT=5m
 
-                # Pre-download the vulnerability database with extended timeout
-                trivy --download-db-only
+                # Trigger DB download with a dummy scan (safe replacement for --download-db-only)
+                trivy image --timeout 5m --format table busybox > /dev/null || true
 
                 # Download HTML template
                 curl -sSL -o trivy-reports/trivy-html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
@@ -78,6 +78,7 @@ stage('Trivy Scan (HTML Reports)') {
         }
     }
 }
+
 
 
         // stage('Push Docker Images') {
