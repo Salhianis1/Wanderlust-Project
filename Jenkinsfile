@@ -48,33 +48,34 @@ pipeline {
         }
 
 stage('Trivy Scan (HTML Reports)') {
-    steps {
-        script {
-            sh '''
-                set -e  # Exit on error
+    parallel {
+        stage('Scan Backend & Generate HTML') {
+            steps {
+                script {
+                    sh '''
+                        set -e
 
-                mkdir -p trivy-reports
+                        trivy image --timeout 5m --format json --output trivy-reports/backend.json ${BACKEND_IMAGE}:latest
 
-                # Increase timeout (to avoid DB download failure)
-                export TRIVY_TIMEOUT=5m
+                        trivy convert --format template --template @trivy-reports/trivy-html.tpl \
+                            --output trivy-reports/backend-report.html trivy-reports/backend.json
+                    '''
+                }
+            }
+        }
+        stage('Scan Frontend & Generate HTML') {
+            steps {
+                script {
+                    sh '''
+                        set -e
 
-                # Trigger DB download with a dummy scan (safe replacement for --download-db-only)
-                trivy image --timeout 5m --format table busybox > /dev/null || true
+                        trivy image --timeout 5m --format json --output trivy-reports/frontend.json ${FRONTEND_IMAGE}:latest
 
-                # Download HTML template
-                curl -sSL -o trivy-reports/trivy-html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
-
-                # Run Trivy scans in JSON format
-                trivy image --timeout 5m --format json --output trivy-reports/backend.json ${BACKEND_IMAGE}:latest
-                trivy image --timeout 5m --format json --output trivy-reports/frontend.json ${FRONTEND_IMAGE}:latest
-
-                # Convert JSON to HTML reports
-                trivy convert --format template --template @trivy-reports/trivy-html.tpl \
-                    --output trivy-reports/backend-report.html trivy-reports/backend.json
-
-                trivy convert --format template --template @trivy-reports/trivy-html.tpl \
-                    --output trivy-reports/frontend-report.html trivy-reports/frontend.json
-            '''
+                        trivy convert --format template --template @trivy-reports/trivy-html.tpl \
+                            --output trivy-reports/frontend-report.html trivy-reports/frontend.json
+                    '''
+                }
+            }
         }
     }
 }
