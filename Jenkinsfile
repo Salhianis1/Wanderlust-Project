@@ -107,28 +107,27 @@ stage('Push Docker Images') {
             ]]
         ]) {
             script {
-                docker.withRegistry('', 'dockerhub-creds') {
-                    parallel(
-                        "Push Backend Image": {
-                            sh '''
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                                docker push ${BACKEND_IMAGE}:latest
-                                docker logout
-                            '''
-                        },
-                        "Push Frontend Image": {
-                            sh '''
-                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                                docker push ${FRONTEND_IMAGE}:latest
-                                docker logout
-                            '''
-                        }
-                    )
-                }
+                parallel(
+                    "Push Backend Image": {
+                        sh '''
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                            docker push ${BACKEND_IMAGE}:latest
+                            docker logout
+                        '''
+                    },
+                    "Push Frontend Image": {
+                        sh '''
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                            docker push ${FRONTEND_IMAGE}:latest
+                            docker logout
+                        '''
+                    }
+                )
             }
         }
     }
 }
+
         stage('Archive and Publish Trivy HTML Reports') {
             steps {
                 archiveArtifacts artifacts: 'trivy-reports/*.html', fingerprint: true
