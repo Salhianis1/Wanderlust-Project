@@ -37,15 +37,24 @@ pipeline {
                 }
             }
         }
-
-        stage('Build Docker Images') {
+stage('Build Docker Images') {
+    parallel {
+        stage('Build Backend Image') {
             steps {
                 script {
                     backendImage = docker.build("${BACKEND_IMAGE}:latest", "backend")
+                }
+            }
+        }
+        stage('Build Frontend Image') {
+            steps {
+                script {
                     frontendImage = docker.build("${FRONTEND_IMAGE}:latest", "frontend")
                 }
             }
         }
+    }
+}
 
 stage('Trivy Scan (HTML Reports)') {
     parallel {
@@ -54,8 +63,11 @@ stage('Trivy Scan (HTML Reports)') {
                 script {
                     sh '''
                         set -e
+                        mkdir -p trivy-reports
 
                         trivy image --timeout 5m --format json --output trivy-reports/backend.json ${BACKEND_IMAGE}:latest
+
+                        curl -sSL -o trivy-reports/trivy-html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
 
                         trivy convert --format template --template @trivy-reports/trivy-html.tpl \
                             --output trivy-reports/backend-report.html trivy-reports/backend.json
@@ -68,8 +80,11 @@ stage('Trivy Scan (HTML Reports)') {
                 script {
                     sh '''
                         set -e
+                        mkdir -p trivy-reports
 
                         trivy image --timeout 5m --format json --output trivy-reports/frontend.json ${FRONTEND_IMAGE}:latest
+
+                        curl -sSL -o trivy-reports/trivy-html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
 
                         trivy convert --format template --template @trivy-reports/trivy-html.tpl \
                             --output trivy-reports/frontend-report.html trivy-reports/frontend.json
@@ -80,31 +95,40 @@ stage('Trivy Scan (HTML Reports)') {
     }
 }
 
-
-
-        stage('Push Docker Images') {
-            steps {
-                withVault([
-                    vaultSecrets: [[
-                        path: 'kv/dockerhub-creds',
-                        secretValues: [
-                            [envVar: 'DOCKER_USERNAME', vaultKey: 'username'],
-                            [envVar: 'DOCKER_PASSWORD', vaultKey: 'password']
-                        ]
-                    ]]
-                ]) {
-                    script {
-                        sh '''
-                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-                            docker push ${BACKEND_IMAGE}:latest
-                            docker push ${FRONTEND_IMAGE}:latest
-                            docker logout
-                        '''
-                    }
+stage('Push Docker Images') {
+    steps {
+        withVault([
+            vaultSecrets: [[
+                path: 'kv/dockerhub-creds',
+                secretValues: [
+                    [envVar: 'DOCKER_USERNAME', vaultKey: 'username'],
+                    [envVar: 'DOCKER_PASSWORD', vaultKey: 'password']
+                ]
+            ]]
+        ]) {
+            script {
+                docker.withRegistry('', 'dockerhub-creds') {
+                    parallel(
+                        "Push Backend Image": {
+                            sh '''
+                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                                docker push ${BACKEND_IMAGE}:latest
+                                docker logout
+                            '''
+                        },
+                        "Push Frontend Image": {
+                            sh '''
+                                echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                                docker push ${FRONTEND_IMAGE}:latest
+                                docker logout
+                            '''
+                        }
+                    )
                 }
             }
         }
-
+    }
+}
         stage('Archive and Publish Trivy HTML Reports') {
             steps {
                 archiveArtifacts artifacts: 'trivy-reports/*.html', fingerprint: true
