@@ -47,12 +47,8 @@ minikube dashboard
 
 # 9. Create 'wanderlust' namespace if it doesn't exist
 kubectl create namespace wanderlust
-#
-5) Update kubernetes config context : 
-```bash
+# 10. Update kubernetes config context : 
 kubectl config set-context --current --namespace wanderlust
-```
-![Update context](https://github.com/DevMadhup/wanderlust/blob/devops/kubernetes/assets/context%20wanderlust.png)
 
 #
 6) Enable DNS resolution on kubernetes cluster :
