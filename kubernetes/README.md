@@ -44,3 +44,28 @@ kubectl get pods -A
 
 # 8. Open Minikube dashboard (optional)
 minikube dashboard
+
+# 9. Create 'wanderlust' namespace if it doesn't exist
+kubectl create namespace wanderlust
+
+# 10. Set current kubectl context to use 'wanderlust' namespace by default
+kubectl config set-context --current --namespace=wanderlust
+
+
+# 11. Enable DNS resolution on Kubernetes cluster
+
+# Check CoreDNS pods and their node placement:
+kubectl get pods -n kube-system -o wide | grep -i coredns
+
+# Edit CoreDNS deployment to scale replicas from 2 to 4 (run pods on worker nodes too)
+kubectl edit deploy coredns -n kube-system
+
+# In the editor, find the replicas field and change:
+# replicas: 2
+# to
+# replicas: 4
+
+# Save and exit editor to apply changes
+
+# Verify updated CoreDNS pods:
+kubectl get pods -n kube-system -o wide | grep -i coredns
