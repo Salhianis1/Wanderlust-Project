@@ -76,7 +76,7 @@ vi .env.docker
 #
 9) Build frontend docker image : 
 ```bash
-docker build -t madhupdevops/frontend-wanderlust:v2.1.8 .
+docker build -t salhianis20/frontend-wanderlust:v2.1.8 .
 ```
 ![Dockerfile frontend](https://github.com/DevMadhup/wanderlust/blob/devops/kubernetes/assets/docker%20frontend%20build.png)
 
@@ -100,7 +100,7 @@ cd ../backend/
 #
 12) Build backend docker image : 
 ```bash
-docker build -t madhupdevops/backend-wanderlust:v2.1.8 .
+docker build -t salhianis20/backend-wanderlust:v2.1.8 .
 ```
 ![Backend dockerfile](https://github.com/DevMadhup/wanderlust/blob/devops/kubernetes/assets/docker%20backend%20build.png)
 
@@ -119,8 +119,8 @@ docker login
 ![docker login](https://github.com/DevMadhup/wanderlust/blob/devops/kubernetes/assets/docker%20login.png)
 
 ```bash
-docker push madhupdevops/frontend-wanderlust:v2.1.8
-docker push madhupdevops/backend-wanderlust:v2.1.8
+docker push salhianis20/frontend-wanderlust:v2.1.8
+docker push salhianis20/backend-wanderlust:v2.1.8
 ```
 
 #
